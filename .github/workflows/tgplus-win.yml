@@ -34,7 +34,18 @@ jobs:
     steps:
       - name: Prepare directories.
         run: |
-          mkdir %userprofile%\TBuild\Libraries
+          rem C: ran out of space while building Qt. Keep the same path,
+          rem but store the files on D: when the runner has it.
+          if exist D:\ (
+            mkdir D:\TBuild\Libraries
+            mklink /j %userprofile%\TBuild D:\TBuild
+          ) else (
+            mkdir %userprofile%\TBuild\Libraries
+          )
+          rem Drop big preinstalled SDKs we never use.
+          for %%d in (C:\Android "C:\Program Files (x86)\Android" C:\ghcup C:\rtools45 C:\rtools44 C:\Julia C:\Miniconda C:\mingw64 C:\SeleniumWebDrivers) do if exist %%d rmdir /s /q %%d
+          fsutil volume diskfree C:
+          if exist D:\ fsutil volume diskfree D:
           mklink /d %GITHUB_WORKSPACE%\TBuild %userprofile%\TBuild
           echo TBUILD=%GITHUB_WORKSPACE%\TBuild>>%GITHUB_ENV%
           echo LibrariesPath=%GITHUB_WORKSPACE%\TBuild\Libraries\win64>>%GITHUB_ENV%
@@ -175,7 +186,18 @@ jobs:
     steps:
       - name: Prepare directories.
         run: |
-          mkdir %userprofile%\TBuild\Libraries
+          rem C: ran out of space while building Qt. Keep the same path,
+          rem but store the files on D: when the runner has it.
+          if exist D:\ (
+            mkdir D:\TBuild\Libraries
+            mklink /j %userprofile%\TBuild D:\TBuild
+          ) else (
+            mkdir %userprofile%\TBuild\Libraries
+          )
+          rem Drop big preinstalled SDKs we never use.
+          for %%d in (C:\Android "C:\Program Files (x86)\Android" C:\ghcup C:\rtools45 C:\rtools44 C:\Julia C:\Miniconda C:\mingw64 C:\SeleniumWebDrivers) do if exist %%d rmdir /s /q %%d
+          fsutil volume diskfree C:
+          if exist D:\ fsutil volume diskfree D:
           mklink /d %GITHUB_WORKSPACE%\TBuild %userprofile%\TBuild
           echo TBUILD=%GITHUB_WORKSPACE%\TBuild>>%GITHUB_ENV%
           echo LibrariesPath=%GITHUB_WORKSPACE%\TBuild\Libraries\win64>>%GITHUB_ENV%
