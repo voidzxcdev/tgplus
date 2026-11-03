@@ -86,6 +86,7 @@ class InnerWidget;
 struct SearchRequestType;
 enum class SearchRequestDelay : uchar;
 class Suggestions;
+class VipBar;
 class ChatSearchIn;
 enum class ChatSearchTab : uchar;
 enum class HashOrCashtag : uchar;
@@ -209,6 +210,10 @@ private:
 	void setupSupportMode();
 	void setupTouchChatPreview();
 	void setupFrozenAccountBar();
+	void setupVipBar();
+	void updateVipBar();
+	[[nodiscard]] bool vipBarReservesSpace() const;
+	[[nodiscard]] bool vipBarShown() const;
 	void setupConnectingWidget();
 	void setupMainMenuToggle();
 	void setupMoreChatsBar();
@@ -335,6 +340,7 @@ private:
 	const int _narrowWidth = 0;
 
 	std::unique_ptr<Ui::AbstractButton> _frozenAccountBar;
+	std::unique_ptr<VipBar> _vipBar;
 
 	object_ptr<Ui::RpWidget> _searchControls;
 	object_ptr<HistoryView::TopBarWidget> _subsectionTopBar = { nullptr };

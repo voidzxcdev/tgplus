@@ -899,6 +899,8 @@ PRIVATE
     dialogs/suggestions/suggestion_unreviewed_auth.cpp
     dialogs/suggestions/suggestion_userpic_setup.cpp
     dialogs/dialogs_widget.cpp
+    dialogs/dialogs_vip.cpp
+    dialogs/dialogs_vip.h
     dialogs/dialogs_widget.h
     editor/audio_track_timeline.cpp
     editor/audio_track_timeline.h
