@@ -2004,6 +2004,23 @@ bool HistoryItem::markContentsRead(bool fromThisClient) {
 	return result;
 }
 
+bool HistoryItem::canKeepAfterServerDelete() const {
+	return !isService()
+		&& !isLocal()
+		&& !isSponsored()
+		&& !(_flags & MessageFlag::FakeHistoryItem)
+		&& !(_flags & MessageFlag::StoryItem)
+		&& !(_flags & MessageFlag::ShortcutMessage);
+}
+
+void HistoryItem::markDeletedOnServer() {
+	if (_deletedOnServer) {
+		return;
+	}
+	_deletedOnServer = true;
+	_history->owner().notifyItemDataChange(this);
+}
+
 void HistoryItem::setIsPinned(bool pinned) {
 	const auto changed = (isPinned() != pinned);
 	const auto guard = gsl::finally([&] {

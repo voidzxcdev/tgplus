@@ -86,6 +86,7 @@ base::options::toggle UnlimitedMessageWidth({
 constexpr auto kPlayStatusLimit = 2;
 constexpr auto kMaxWidth = (1 << 16) - 1;
 constexpr auto kMaxNiceToReadLines = 6;
+constexpr auto kDeletedMessageOpacity = 0.55;
 const auto kPsaTooltipPrefix = "cloud_lng_tooltip_psa_";
 constexpr auto kFullLineAppearDuration = crl::time(300);
 constexpr auto kFullLineAppearFinalDuration = crl::time(120);
@@ -1844,6 +1845,14 @@ void Message::draw(Painter &p, const PaintContext &context) const {
 	if (isHidden()) {
 		return;
 	}
+
+	const auto wasOpacity = p.opacity();
+	if (item->isDeletedOnServer()) {
+		p.setOpacity(wasOpacity * kDeletedMessageOpacity);
+	}
+	const auto restoreOpacity = gsl::finally([&] {
+		p.setOpacity(wasOpacity);
+	});
 
 	const auto entry = logEntryOriginal();
 	const auto check = factcheckBlock();

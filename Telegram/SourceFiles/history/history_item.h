@@ -287,6 +287,11 @@ public:
 	void markMediaAndMentionRead();
 	bool markContentsRead(bool fromThisClient = false);
 	void setIsPinned(bool isPinned);
+	[[nodiscard]] bool isDeletedOnServer() const {
+		return _deletedOnServer;
+	}
+	[[nodiscard]] bool canKeepAfterServerDelete() const;
+	void markDeletedOnServer();
 	void setStoryInProfile(bool inProfile);
 
 	// For edit media in history_message.
@@ -835,6 +840,7 @@ private:
 	BusinessShortcutId _shortcutId = 0;
 	// Service-styled regular messages still accept ordinary content updates.
 	bool _isServiceMessage = false;
+	bool _deletedOnServer = false;
 
 	MessageGroupId _groupId = MessageGroupId();
 	EffectId _effectId = 0;
