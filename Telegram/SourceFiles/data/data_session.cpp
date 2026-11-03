@@ -3341,11 +3341,16 @@ void Session::processMessagesDeleted(
 		return;
 	}
 
+	const auto keep = Core::App().settings().keepDeletedMessages();
 	auto toDestroy = std::vector<not_null<HistoryItem*>>();
 	auto historiesToCheck = base::flat_set<not_null<History*>>();
 	for (const auto &messageId : data) {
 		const auto i = list ? list->find(messageId.v) : Messages::iterator();
 		if (list && i != list->end()) {
+			if (keep && i->second->canKeepAfterServerDelete()) {
+				i->second->markDeletedOnServer();
+				continue;
+			}
 			const auto history = i->second->history();
 			toDestroy.push_back(i->second);
 			historiesToCheck.emplace(history);
@@ -3367,10 +3372,15 @@ void Session::processMessagesDeleted(
 }
 
 void Session::processNonChannelMessagesDeleted(const QVector<MTPint> &data) {
+	const auto keep = Core::App().settings().keepDeletedMessages();
 	auto toDestroy = std::vector<not_null<HistoryItem*>>();
 	auto historiesToCheck = base::flat_set<not_null<History*>>();
 	for (const auto &messageId : data) {
 		if (const auto item = nonChannelMessage(messageId.v)) {
+			if (keep && item->canKeepAfterServerDelete()) {
+				item->markDeletedOnServer();
+				continue;
+			}
 			const auto history = item->history();
 			toDestroy.push_back(item);
 			historiesToCheck.emplace(history);

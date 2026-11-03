@@ -28,6 +28,7 @@ constexpr auto kInitialVideoQuality = 480; // Start with SD.
 constexpr auto kMinIvZoom = 25;
 constexpr auto kMaxIvZoom = 400;
 constexpr auto kLanguageCodesFormat = qint32(1);
+constexpr auto kKeepDeletedMessagesPref = "tgplus_keep_deleted_messages";
 
 [[nodiscard]] QString SerializeLanguage(QLocale::Language language) {
 	return (language > QLocale::C)
@@ -1559,6 +1560,14 @@ void Settings::writePrefImpl<QByteArray>(
 		std::string_view key,
 		QByteArray value) {
 	writePrefGeneric(key, value);
+}
+
+bool Settings::keepDeletedMessages() {
+	return readPref<bool>(kKeepDeletedMessagesPref, true);
+}
+
+void Settings::setKeepDeletedMessages(bool value) {
+	writePref<bool>(kKeepDeletedMessagesPref, value);
 }
 
 QString Settings::getSoundPath(const QString &key) const {

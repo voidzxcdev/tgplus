@@ -1013,6 +1013,17 @@ void BuildMessagesSection(SectionBuilder &builder) {
 
 	builder.add(nullptr, [] {
 		return SearchEntry{
+			.id = u"chat/keep-deleted"_q,
+			.title = tr::lng_settings_keep_deleted_messages(tr::now),
+			.keywords = { u"deleted"_q, u"history"_q, u"keep"_q },
+			.checkIcon = Core::App().settings().keepDeletedMessages()
+				? SearchEntryCheckIcon::Checked
+				: SearchEntryCheckIcon::Unchecked,
+		};
+	});
+
+	builder.add(nullptr, [] {
+		return SearchEntry{
 			.id = u"chat/corner-reaction"_q,
 			.title = tr::lng_settings_chat_corner_reaction(tr::now),
 			.keywords = { u"corner"_q, u"reaction"_q },
@@ -1743,6 +1754,25 @@ void SetupMessages(
 		Core::App().settings().setPullToNextChannel(checked);
 		Core::App().saveSettingsDelayed();
 	}, inner->lifetime());
+
+	const auto keepDeleted = inner->add(
+		object_ptr<Ui::Checkbox>(
+			inner,
+			tr::lng_settings_keep_deleted_messages(tr::now),
+			Core::App().settings().keepDeletedMessages(),
+			st::settingsCheckbox),
+		st::settingsCheckboxPadding);
+	keepDeleted->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Core::App().settings().setKeepDeletedMessages(checked);
+		Core::App().saveSettingsDelayed();
+	}, inner->lifetime());
+	if (highlights) {
+		highlights->push_back({ u"chat/keep-deleted"_q, {
+			keepDeleted,
+			{ .radius = st::boxRadius },
+		} });
+	}
 
 	Ui::AddSkip(inner);
 }
