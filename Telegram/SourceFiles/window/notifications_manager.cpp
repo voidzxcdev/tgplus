@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "window/notifications_manager.h"
 
+#include "dialogs/dialogs_vip.h"
+
 #include "base/options.h"
 #include "base/platform/base_platform_info.h"
 #include "base/qt/qt_key_modifiers.h"
@@ -369,6 +371,13 @@ System::SkipState System::computeSkipState(
 		notifySettings->request(notifyBy);
 	}
 
+	if (messageType
+		&& !item->out()
+		&& Dialogs::IsVipPeer(thread->peer())) {
+		// TGPlus: the "most important person" always gets through,
+		// even if the chat is muted in the app.
+		return withSilent(SkipState::DontSkip);
+	}
 	if (messageType && notifySettings->muteUnknown(thread)) {
 		return { SkipState::Unknown };
 	} else if (messageType && !notifySettings->isMuted(thread)) {
