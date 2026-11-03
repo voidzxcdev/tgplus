@@ -899,6 +899,8 @@ PRIVATE
     dialogs/suggestions/suggestion_unreviewed_auth.cpp
     dialogs/suggestions/suggestion_userpic_setup.cpp
     dialogs/dialogs_widget.cpp
+    dialogs/dialogs_vip.cpp
+    dialogs/dialogs_vip.h
     dialogs/dialogs_widget.h
     editor/audio_track_timeline.cpp
     editor/audio_track_timeline.h
@@ -1932,6 +1934,8 @@ PRIVATE
     settings/sections/settings_advanced.h
     settings/sections/settings_chat.cpp
     settings/sections/settings_chat.h
+    settings/sections/settings_customization.cpp
+    settings/sections/settings_customization.h
     settings/sections/settings_blocked_peers.cpp
     settings/sections/settings_blocked_peers.h
     settings/sections/settings_business.cpp

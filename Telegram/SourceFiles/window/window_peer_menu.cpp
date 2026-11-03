@@ -120,6 +120,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_chat_filters.h"
 #include "data/data_peer_values.h"
 #include "dialogs/dialogs_key.h"
+#include "dialogs/dialogs_vip.h"
 #include "core/application.h"
 #include "core/ui_integration.h"
 #include "export/export_manager.h"
@@ -1915,6 +1916,19 @@ void Filler::fillContextMenuActions() {
 	addHidePromotion();
 	addToggleArchive();
 	addTogglePin();
+	if (_peer
+		&& !_topic
+		&& !_sublist
+		&& Dialogs::CanBeVipPeer(_peer)) {
+		const auto peer = _peer;
+		const auto vip = Dialogs::IsVipPeer(peer);
+		_addAction(
+			(vip
+				? tr::lng_vip_peer_remove(tr::now)
+				: tr::lng_vip_peer_set(tr::now)),
+			[=] { Dialogs::ToggleVipPeer(peer); },
+			vip ? &st::menuIconFave : &st::menuIconStar);
+	}
 	if (ViewProfileInChatsListContextMenu.value()) {
 		addInfo();
 	}

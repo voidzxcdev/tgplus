@@ -968,3 +968,8 @@ restoreWindowsOfferClose: IconButton(dialogsCancelSearchInPeer) {
 	rippleAreaPosition: point(0px, 1px);
 	rippleAreaSize: 28px;
 }
+
+// TGPlus: "most important person" bar.
+dialogsVipStar: icon {{ "menu/star", dialogsNameFgActive }};
+dialogsVipStarTop: -3px;
+dialogsVipStarSkip: 2px;

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "dialogs/dialogs_widget.h"
 
+#include "dialogs/dialogs_vip.h"
+
 #include "base/call_delayed.h"
 #include "base/qt/qt_key_modifiers.h"
 #include "base/options.h"
@@ -119,6 +121,12 @@ base::options::toggle OptionForumHideChatsList({
 	.id = kOptionForumHideChatsList,
 	.name = "Hide chat list in forums",
 	.description = "Don't keep a narrow column of chat list.",
+});
+
+base::options::toggle OptionHideStoriesBar({
+	.id = kOptionHideStoriesBar,
+	.name = "Hide stories bar",
+	.description = "Don't show the stories row above the chat list.",
 });
 
 // An invisible, larger hit-area stacked under the main menu toggle so a mouse
@@ -265,6 +273,7 @@ QImage CommunityAddChatNarrowButton::prepareRippleMask() const {
 } // namespace
 
 const char kOptionForumHideChatsList[] = "forum-hide-chats-list";
+const char kOptionHideStoriesBar[] = "tgplus-hide-stories-bar";
 
 class Widget::BottomButton : public Ui::RippleButton {
 public:
@@ -843,6 +852,7 @@ Widget::Widget(
 	}
 
 	setupFrozenAccountBar();
+	setupVipBar();
 	setupTopBarSuggestions();
 #ifdef _DEBUG
 	setupTopBarSuggestionTestHotkeys();
@@ -1350,6 +1360,56 @@ void Widget::updateFrozenAccountBar() {
 	}
 }
 
+bool Widget::vipBarReservesSpace() const {
+	return _vipBar
+		&& _searchState.query.isEmpty()
+		&& !_searchState.inChat
+		&& !_searchState.community
+		&& !suggestionsCoverList();
+}
+
+bool Widget::vipBarShown() const {
+	// Keep the space reserved during animations, so the list doesn't jump.
+	return vipBarReservesSpace()
+		&& !_showAnimation
+		&& _widthAnimationCache.isNull();
+}
+
+void Widget::updateVipBar() {
+	const auto peerId = VipPeerId(&session());
+	const auto peer = peerId
+		? session().data().peerLoaded(peerId)
+		: nullptr;
+	if (_layout == Layout::Child
+		|| _openedForum
+		|| _openedCommunity
+		|| !peer) {
+		if (!_vipBar) {
+			return;
+		}
+		_vipBar = nullptr;
+	} else if (!_vipBar || _vipBar->peer() != peer) {
+		_vipBar = std::make_unique<VipBar>(this, controller(), peer);
+		_vipBar->setVisible(vipBarShown());
+	} else if (_vipBar->isHidden() == vipBarShown()) {
+		_vipBar->setVisible(vipBarShown());
+	} else {
+		return;
+	}
+	updateControlsGeometry();
+}
+
+void Widget::setupVipBar() {
+	rpl::merge(
+		VipPeerIdValue(&session()) | rpl::to_empty,
+		session().data().chatsListLoadedEvents() | rpl::to_empty,
+		session().changes().peerUpdates(
+			Data::PeerUpdate::Flag::Name) | rpl::to_empty
+	) | rpl::on_next([=] {
+		updateVipBar();
+	}, lifetime());
+}
+
 void Widget::updateTopBarSuggestions() {
 	_openedFolderOrForum = (_openedFolder
 		|| _openedForum
@@ -1747,6 +1807,12 @@ void Widget::setupMainMenuToggle() {
 }
 
 void Widget::setupStories() {
+	OptionHideStoriesBar.changes(
+	) | rpl::on_next([=] {
+		updateStoriesVisibility();
+		updateControlsGeometry();
+	}, _stories->lifetime());
+
 	_stories->verticalScrollEvents(
 	) | rpl::on_next([=](not_null<QWheelEvent*> e) {
 		_scroll->viewportEvent(e);
@@ -1995,6 +2061,9 @@ void Widget::updateControlsVisibility(bool fast) {
 	}
 	if (_frozenAccountBar) {
 		_frozenAccountBar->show();
+	}
+	if (_vipBar) {
+		_vipBar->setVisible(vipBarShown());
 	}
 	if (_chatFilters) {
 		_chatFilters->setVisible(!_openedForum);
@@ -2390,6 +2459,7 @@ void Widget::changeOpenedFolder(Data::Folder *folder, anim::type animated) {
 			storiesExplicitCollapse();
 		}
 		updateFrozenAccountBar();
+		updateVipBar();
 		updateTopBarSuggestions();
 	}, (folder != nullptr), animated);
 }
@@ -2448,6 +2518,7 @@ void Widget::changeOpenedForum(Data::Forum *forum, anim::type animated) {
 		_inner->changeOpenedForum(forum);
 		storiesToggleExplicitExpand(false);
 		updateFrozenAccountBar();
+		updateVipBar();
 		updateTopBarSuggestions();
 		updateStoriesVisibility();
 	}, (forum != nullptr), animated);
@@ -2466,6 +2537,7 @@ void Widget::changeOpenedCommunity(
 		_openedCommunity = community;
 		_inner->changeOpenedCommunity(community);
 		updateFrozenAccountBar();
+		updateVipBar();
 		updateTopBarSuggestions();
 		updateCommunityRequestsBubble();
 		updateCommunityAddChatButton();
@@ -2900,6 +2972,9 @@ void Widget::startWidthAnimation() {
 	if (_frozenAccountBar) {
 		_frozenAccountBar->hide();
 	}
+	if (_vipBar) {
+		_vipBar->hide();
+	}
 	if (_chatFilters) {
 		_chatFilters->hide();
 	}
@@ -2912,6 +2987,9 @@ void Widget::stopWidthAnimation() {
 		_scroll->setVisible(!suggestionsCoverList());
 		if (_frozenAccountBar) {
 			_frozenAccountBar->setVisible(!suggestionsCoverList());
+		}
+		if (_vipBar) {
+			_vipBar->setVisible(vipBarShown());
 		}
 		if (_chatFilters) {
 			_chatFilters->setVisible(!suggestionsCoverList() && !_openedForum);
@@ -2946,6 +3024,7 @@ void Widget::updateStoriesVisibility() {
 		|| (widthAnimation && !suggestionsAnimation)
 		|| _childList
 		|| _stories->empty()
+		|| OptionHideStoriesBar.value()
 		|| (pulledDown && hiddenAnimated);
 	const auto hidden = hiddenInstant || hiddenAnimated;
 	const auto changed = (_stories->toggledHidden() != hidden);
@@ -3043,6 +3122,9 @@ void Widget::startSlideAnimation(
 	}
 	if (_frozenAccountBar) {
 		_frozenAccountBar->hide();
+	}
+	if (_vipBar) {
+		_vipBar->hide();
 	}
 	if (_chatFilters) {
 		_chatFilters->hide();
@@ -4344,6 +4426,9 @@ bool Widget::applySearchState(SearchState state) {
 			&& !searchInPeer());
 		updateControlsGeometry();
 	}
+	if (queryEmptyChanged || inChatChanged || communityChanged) {
+		updateVipBar();
+	}
 	if (queryEmptyChanged) {
 		_searchStateForTopBarSuggestion.fire(!_searchState.query.isEmpty());
 	}
@@ -4790,6 +4875,9 @@ void Widget::updateControlsGeometry() {
 	if (_frozenAccountBar) {
 		_frozenAccountBar->resize(barw, _frozenAccountBar->height());
 	}
+	if (_vipBar) {
+		_vipBar->resize(barw, _vipBar->height());
+	}
 	_updateScrollGeometryCached = [=] {
 		const auto frozenBarTop = expandedStoriesTop
 			+ ((!_stories || _stories->isHidden()) ? 0 : _aboveScrollAdded);
@@ -4821,7 +4909,7 @@ void Widget::updateControlsGeometry() {
 		if (_chatFilters) {
 			_chatFilters->move(0, chatFiltersTop);
 		}
-		const auto scrollTop = chatFiltersTop
+		const auto vipBarTop = chatFiltersTop
 			+ ((_chatFilters
 				&& _searchState.query.isEmpty()
 				&& !_openedForum
@@ -4829,6 +4917,11 @@ void Widget::updateControlsGeometry() {
 				&& !searchInPeer())
 				? (_chatFilters->height() * (1. - narrowRatio))
 				: 0);
+		if (_vipBar) {
+			_vipBar->move(0, vipBarTop);
+		}
+		const auto scrollTop = vipBarTop
+			+ (vipBarReservesSpace() ? _vipBar->height() : 0);
 		const auto tabsSkip = (_suggestions && _suggestions->tabsOnly())
 			? _suggestions->tabsHeight()
 			: 0;
