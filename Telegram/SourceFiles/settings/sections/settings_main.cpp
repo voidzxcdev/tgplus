@@ -52,6 +52,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/sections/settings_business.h"
 #include "settings/sections/settings_calls.h"
 #include "settings/sections/settings_chat.h"
+#include "settings/sections/settings_customization.h"
 #include "settings/settings_codes.h"
 #include "settings/settings_faq_suggestions.h"
 #include "settings/sections/settings_credits.h"
@@ -397,6 +398,13 @@ void BuildSectionButtons(SectionBuilder &builder) {
 		.targetSection = ChatId(),
 		.icon = { &st::menuIconChatBubble },
 		.keywords = { u"themes"_q, u"appearance"_q, u"stickers"_q },
+	});
+
+	builder.addSectionButton({
+		.title = tr::lng_tgplus_custom_title(),
+		.targetSection = CustomizationId(),
+		.icon = { &st::menuIconCustomize },
+		.keywords = { u"customization"_q, u"appearance"_q, u"tgplus"_q },
 	});
 
 	{ // Folders

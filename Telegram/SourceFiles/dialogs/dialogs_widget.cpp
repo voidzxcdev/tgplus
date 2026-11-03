@@ -121,6 +121,12 @@ base::options::toggle OptionForumHideChatsList({
 	.description = "Don't keep a narrow column of chat list.",
 });
 
+base::options::toggle OptionHideStoriesBar({
+	.id = kOptionHideStoriesBar,
+	.name = "Hide stories bar",
+	.description = "Don't show the stories row above the chat list.",
+});
+
 // An invisible, larger hit-area stacked under the main menu toggle so a mouse
 // click near the toggle still opens the menu. It duplicates the toggle's action
 // and carries no label, so it reports no accessible role - that keeps the screen
@@ -265,6 +271,7 @@ QImage CommunityAddChatNarrowButton::prepareRippleMask() const {
 } // namespace
 
 const char kOptionForumHideChatsList[] = "forum-hide-chats-list";
+const char kOptionHideStoriesBar[] = "tgplus-hide-stories-bar";
 
 class Widget::BottomButton : public Ui::RippleButton {
 public:
@@ -1747,6 +1754,12 @@ void Widget::setupMainMenuToggle() {
 }
 
 void Widget::setupStories() {
+	OptionHideStoriesBar.changes(
+	) | rpl::on_next([=] {
+		updateStoriesVisibility();
+		updateControlsGeometry();
+	}, _stories->lifetime());
+
 	_stories->verticalScrollEvents(
 	) | rpl::on_next([=](not_null<QWheelEvent*> e) {
 		_scroll->viewportEvent(e);
@@ -2946,6 +2959,7 @@ void Widget::updateStoriesVisibility() {
 		|| (widthAnimation && !suggestionsAnimation)
 		|| _childList
 		|| _stories->empty()
+		|| OptionHideStoriesBar.value()
 		|| (pulledDown && hiddenAnimated);
 	const auto hidden = hiddenInstant || hiddenAnimated;
 	const auto changed = (_stories->toggledHidden() != hidden);

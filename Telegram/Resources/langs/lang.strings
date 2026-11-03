@@ -709,6 +709,19 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "lng_settings_experimental_irrelevant" = "This option isn't relevant for your system.";
 
 "lng_settings_section_chat_settings" = "Chat Settings";
+"lng_tgplus_custom_title" = "Customization";
+"lng_tgplus_custom_theme" = "Theme and accent color";
+"lng_tgplus_custom_chat_list" = "Chat list";
+"lng_tgplus_custom_hide_stories" = "Hide stories bar";
+"lng_tgplus_custom_mute_icon" = "Show a mute icon next to muted chat names";
+"lng_tgplus_custom_messages" = "Messages";
+"lng_tgplus_custom_small_radius" = "Smaller bubble corners";
+"lng_tgplus_custom_wide_messages" = "Use the full width for messages";
+"lng_tgplus_custom_hide_ai" = "Hide the AI button in the message field";
+"lng_tgplus_custom_restart_note" = "Some of these options apply after a restart. You will be asked to restart when needed.";
+"lng_tgplus_custom_profiles" = "Profiles";
+"lng_tgplus_custom_peer_id" = "Show user and chat IDs in profiles";
+"lng_tgplus_custom_joined_date" = "Show when you joined a channel";
 "lng_settings_replace_emojis" = "Replace emoji automatically";
 "lng_settings_system_text_replace" = "System text replacements";
 "lng_settings_suggest_emoji" = "Suggest emoji replacements";

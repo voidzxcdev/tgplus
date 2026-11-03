@@ -76,6 +76,7 @@ struct Content;
 namespace Dialogs {
 
 extern const char kOptionForumHideChatsList[];
+extern const char kOptionHideStoriesBar[];
 
 struct RowDescriptor;
 class Row;
