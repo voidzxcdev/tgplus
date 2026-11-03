@@ -8,6 +8,7 @@ on:
       - private-canary
       - 'private-ci/**'
       - 'private-ci-*'
+      - 'tgplus/**'
     paths-ignore:
       - 'docs/**'
       - '**.md'
