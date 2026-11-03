@@ -127,6 +127,17 @@ jobs:
           key: tgplus-qt-rel-${{ env.CACHE_KEY }}-${{ github.run_id }}
           restore-keys: tgplus-qt-rel-${{ env.CACHE_KEY }}-
 
+      # An earlier cleanup deleted tdesktop_rust/out/src/wallet_engine/*.cpp
+      # and the tlottie/wallet-engine sources while their stage keys stayed
+      # valid. Drop those keys so the three small Rust stages rebuild.
+      - name: Repair Rust stages gutted by cleanup.
+        shell: bash
+        run: |
+          if [ ! -f "$LibrariesPath/tdesktop_rust/out/src/wallet_engine/wallet_engine.cpp" ]; then
+            echo "wallet_engine.cpp missing, forcing tlottie, wallet-engine, tdesktop_rust rebuild"
+            rm -f "$LibrariesPath/cache_keys/tlottie" "$LibrariesPath/cache_keys/wallet-engine" "$LibrariesPath/cache_keys/tdesktop_rust"
+          fi
+
       - name: Libraries.
         id: libs
         timeout-minutes: 320
@@ -137,7 +148,7 @@ jobs:
       - name: Free up some disk space.
         if: always()
         shell: bash
-        run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' ')' -type f ')' -o -empty ')' -delete
+        run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/gas-preprocessor/*' -o -path '*/qt6_windows7/*' -o -path '*/src/wallet_engine/*' -o '(' '(' -path '*/tlottie/*' -o -path '*/wallet-engine/*' ')' ! -path '*/target/*' ')' ')' -type f ')' -o '(' -empty ! -path '*/tlottie/*' ! -path '*/wallet-engine/*' ')' ')' -delete
 
       - name: Save ThirdParty cache.
         if: always()
@@ -272,7 +283,7 @@ jobs:
 
       - name: Free up some disk space.
         shell: bash
-        run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' ')' -type f ')' -o -empty ')' -delete
+        run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/gas-preprocessor/*' -o -path '*/qt6_windows7/*' -o -path '*/src/wallet_engine/*' -o '(' '(' -path '*/tlottie/*' -o -path '*/wallet-engine/*' ')' ! -path '*/target/*' ')' ')' -type f ')' -o '(' -empty ! -path '*/tlottie/*' ! -path '*/wallet-engine/*' ')' ')' -delete
 
       # TDESKTOP_API_TEST uses the public test api_id from the official CI.
       # Auto-update is off so the official updater never replaces TGPlus.
