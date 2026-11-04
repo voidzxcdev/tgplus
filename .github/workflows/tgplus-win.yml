@@ -285,6 +285,15 @@ jobs:
         shell: bash
         run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/gas-preprocessor/*' -o -path '*/qt6_windows7/*' -o -path '*/src/wallet_engine/*' -o '(' '(' -path '*/tlottie/*' -o -path '*/wallet-engine/*' ')' ! -path '*/target/*' ')' ')' -type f ')' -o '(' -empty ! -path '*/tlottie/*' ! -path '*/wallet-engine/*' ')' ')' -delete
 
+      # The 4-core/16 GB runner ran out of memory compiling Telegram
+      # (C1060 / C3859 "Failed to create virtual memory for PCH").
+      - name: Enlarge pagefile.
+        uses: al-cheb/configure-pagefile-action@v1.5
+        with:
+          minimum-size: 16GB
+          maximum-size: 32GB
+          disk-root: "D:"
+
       # TDESKTOP_API_TEST uses the public test api_id from the official CI.
       # Auto-update is off so the official updater never replaces TGPlus.
       - name: TGPlus build.
@@ -296,7 +305,8 @@ jobs:
           -D TDESKTOP_API_TEST=ON ^
           -D CMAKE_CONFIGURATION_TYPES=Release ^
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
-          -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
+          -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON ^
+          -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=
           if errorlevel 1 exit /b 1
 
           cmake --build ..\out --config Release --parallel
