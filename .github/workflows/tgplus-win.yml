@@ -19,6 +19,10 @@ concurrency:
   group: tgplus-win-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: read
+
 env:
   PREPARE_PATH: "Telegram/build/prepare/prepare.py"
 
@@ -314,9 +318,7 @@ jobs:
           where ninja >nul 2>nul || pip install ninja
           if errorlevel 1 exit /b 1
 
-          call configure.bat ^
-          "-GNinja Multi-Config" ^
-          %API_OPTIONS% ^
+          call configure.bat "-GNinja Multi-Config" %API_OPTIONS% ^
           -D CMAKE_CONFIGURATION_TYPES=Release ^
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON ^
@@ -327,15 +329,18 @@ jobs:
       # at the end of the two hour build.
       - name: Compile changed sources.
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           cd "$TBUILD/$REPO_NAME"
-          BEFORE="${{ github.event.before }}"
-          if [ -n "$BEFORE" ] && [ -n "${BEFORE//0/}" ] \
-              && git fetch -q --depth=1 origin "$BEFORE"; then
-            BASE="$BEFORE"
-          else
+          BASE="$(gh run list --repo "$GITHUB_REPOSITORY" \
+            --workflow tgplus-win.yml --branch "$GITHUB_REF_NAME" \
+            --status success --limit 1 --json headSha \
+            --jq '.[0].headSha' || true)"
+          if [ -z "$BASE" ] || ! git fetch -q --depth=1 origin "$BASE"; then
             BASE="HEAD~1"
           fi
+          echo "Comparing with $BASE"
           {
             git diff --name-only "$BASE" HEAD -- 'Telegram/SourceFiles/*.cpp' || true
             ls Telegram/SourceFiles/tgplus/*.cpp \
