@@ -12,6 +12,8 @@ on:
       - tgplus/build
     paths-ignore:
       - '**.md'
+      - 'recorder/**'
+      - 'render.yaml'
 
 concurrency:
   group: tgplus-win-${{ github.ref }}
@@ -221,6 +223,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 2
           path: ${{ env.TBUILD }}\${{ env.REPO_NAME }}
 
       - name: First set up.
@@ -294,22 +297,71 @@ jobs:
           maximum-size: 32GB
           disk-root: "D:"
 
-      # TDESKTOP_API_TEST uses the public test api_id from the official CI.
+      # Own api_id and api_hash come from the TGPLUS_API_ID and
+      # TGPLUS_API_HASH secrets, without them the public test pair is used.
       # Auto-update is off so the official updater never replaces TGPlus.
-      - name: TGPlus build.
+      # Ninja lets the next step compile single files.
+      - name: Configure.
+        env:
+          TGPLUS_API_ID: ${{ secrets.TGPLUS_API_ID }}
+          TGPLUS_API_HASH: ${{ secrets.TGPLUS_API_HASH }}
         run: |
           cd %TBUILD%\%REPO_NAME%\Telegram
 
+          set API_OPTIONS=-D TDESKTOP_API_TEST=ON
+          if not "%TGPLUS_API_ID%"=="" if not "%TGPLUS_API_HASH%"=="" set API_OPTIONS=-D TDESKTOP_API_ID=%TGPLUS_API_ID% -D TDESKTOP_API_HASH=%TGPLUS_API_HASH%
+
+          where ninja >nul 2>nul || pip install ninja
+          if errorlevel 1 exit /b 1
+
           call configure.bat ^
-          x64 ^
-          -D TDESKTOP_API_TEST=ON ^
+          "-GNinja Multi-Config" ^
+          %API_OPTIONS% ^
           -D CMAKE_CONFIGURATION_TYPES=Release ^
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON ^
           -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=
           if errorlevel 1 exit /b 1
 
-          cmake --build ..\out --config Release --parallel
+      # Compile errors in changed files show up here in minutes instead of
+      # at the end of the two hour build.
+      - name: Compile changed sources.
+        shell: bash
+        run: |
+          cd "$TBUILD/$REPO_NAME"
+          BEFORE="${{ github.event.before }}"
+          if [ -n "$BEFORE" ] && [ -n "${BEFORE//0/}" ] \
+              && git fetch -q --depth=1 origin "$BEFORE"; then
+            BASE="$BEFORE"
+          else
+            BASE="HEAD~1"
+          fi
+          {
+            git diff --name-only "$BASE" HEAD -- 'Telegram/SourceFiles/*.cpp' || true
+            ls Telegram/SourceFiles/tgplus/*.cpp \
+              Telegram/SourceFiles/settings/sections/settings_tgplus.cpp
+          } | sort -u > "$RUNNER_TEMP/changed.txt"
+          cd out
+          ninja -f build-Release.ninja -t targets all \
+            | sed -n 's/^\(.*\.cpp\.obj\): .*/\1/p' \
+            | tr '\\' '/' > "$RUNNER_TEMP/objects.txt"
+          OBJECTS=()
+          while read -r file; do
+            [ -f "../$file" ] || continue
+            object="$(grep -F "/${file#Telegram/}.obj" "$RUNNER_TEMP/objects.txt" | head -n 1)"
+            [ -n "$object" ] && OBJECTS+=("$object")
+          done < "$RUNNER_TEMP/changed.txt"
+          if [ ${#OBJECTS[@]} -eq 0 ]; then
+            echo "::warning::No objects matched the changed sources."
+            exit 0
+          fi
+          printf 'Checking %s\n' "${OBJECTS[@]}"
+          ninja -f build-Release.ninja -k 0 -j 4 "${OBJECTS[@]}"
+
+      - name: TGPlus build.
+        run: |
+          cd %TBUILD%\%REPO_NAME%\out
+          cmake --build . --config Release --parallel 4
           if errorlevel 1 exit /b 1
 
       - name: Install Inno Setup.
