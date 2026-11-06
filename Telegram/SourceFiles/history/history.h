@@ -594,6 +594,15 @@ private:
 	void addCreatedOlderSlice(
 		const std::vector<not_null<HistoryItem*>> &items);
 
+	// Messages deleted on the server are re-shown from the TGPlus archive.
+	void mergeArchived(
+		std::vector<not_null<HistoryItem*>> &items,
+		MsgId after,
+		MsgId before);
+	[[nodiscard]] bool sliceReachesLast(MsgId sliceMax) const;
+	void addArchivedAtTop();
+	void addArchivedAtBottom();
+
 	void checkForLoadedAtTop(not_null<HistoryItem*> added);
 	void mainViewRemoved(
 		not_null<HistoryBlock*> block,

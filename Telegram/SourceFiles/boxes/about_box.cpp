@@ -35,6 +35,19 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace {
 
+rpl::producer<TextWithEntities> TextTgplus() {
+	return tr::lng_tgplus_about(tr::marked);
+}
+
+rpl::producer<TextWithEntities> TextTgplusSource() {
+	return tr::lng_tgplus_about_source(
+		lt_link,
+		rpl::single(tr::link(
+			u"github.com/voidzxcdev/tgplus"_q,
+			u"https://github.com/voidzxcdev/tgplus"_q)),
+		tr::marked);
+}
+
 rpl::producer<TextWithEntities> Text1() {
 	return tr::lng_about_text1(
 		lt_api_link,
@@ -55,17 +68,10 @@ rpl::producer<TextWithEntities> Text2() {
 		tr::marked);
 }
 
-rpl::producer<TextWithEntities> Text3() {
-	return tr::lng_about_text3(
-		lt_faq_link,
-		tr::lng_about_text3_faq(tr::url(telegramFaqLink())),
-		tr::marked);
-}
-
 } // namespace
 
 void AboutBox(not_null<Ui::GenericBox*> box) {
-	box->setTitle(u"Telegram Desktop"_q);
+	box->setTitle(rpl::single(AppName.utf16()));
 
 	auto layout = box->verticalLayout();
 
@@ -124,9 +130,10 @@ void AboutBox(not_null<Ui::GenericBox*> box) {
 		Ui::AddSkip(layout, st::aboutSkip);
 	};
 
+	addText(TextTgplus());
+	addText(TextTgplusSource());
 	addText(Text1());
 	addText(Text2());
-	addText(Text3());
 
 	box->addButton(tr::lng_close(), [=] { box->closeBox(); });
 

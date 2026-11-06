@@ -75,6 +75,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "iv/editor/iv_editor_session.h"
 #include "ui/boxes/confirm_box.h"
 #include "apiwrap.h"
+#include "tgplus/tgplus_settings.h"
 #include "ui/text/format_values.h" // Ui::FormatPhone
 
 namespace Api {
@@ -999,7 +1000,8 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 	});
 
 	const auto &config = _session->serverConfig();
-	bool isOnline = Core::App().hasActiveWindow(&session());
+	bool isOnline = Core::App().hasActiveWindow(&session())
+		&& !Tgplus::GhostHides(Tgplus::Option::GhostHideOnline);
 	int updateIn = config.onlineUpdatePeriod;
 	Assert(updateIn >= 0);
 	if (isOnline) {

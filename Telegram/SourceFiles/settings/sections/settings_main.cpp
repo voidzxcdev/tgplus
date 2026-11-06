@@ -53,6 +53,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/sections/settings_calls.h"
 #include "settings/sections/settings_chat.h"
 #include "settings/sections/settings_customization.h"
+#include "settings/sections/settings_tgplus.h"
 #include "settings/settings_codes.h"
 #include "settings/settings_faq_suggestions.h"
 #include "settings/sections/settings_credits.h"
@@ -64,6 +65,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/sections/settings_privacy_security.h"
 #include "settings/settings_scale_preview.h"
 #include "storage/localstorage.h"
+#include "tgplus/tgplus_settings.h"
 #include "ui/basic_click_handlers.h"
 #include "ui/boxes/confirm_box.h"
 #include "ui/boxes/peer_qr_box.h"
@@ -269,7 +271,9 @@ void Cover::initViewers() {
 		updatePhoneText();
 	}, lifetime());
 
-	_user->session().settings().phoneNumberHiddenValue(
+	rpl::merge(
+		_user->session().settings().phoneNumberHiddenValue(),
+		Tgplus::Value(Tgplus::Option::StreamerMode)
 	) | rpl::on_next([=] {
 		updatePhoneText();
 	}, lifetime());
@@ -324,7 +328,8 @@ void Cover::refreshNameGeometry(int newWidth) {
 }
 
 void Cover::updatePhoneText() {
-	if (_user->session().settings().phoneNumberHidden()) {
+	if (_user->session().settings().phoneNumberHidden()
+		|| Tgplus::Enabled(Tgplus::Option::StreamerMode)) {
 		_phone->setMarkedText(
 			Ui::Text::Wrapped({ _phoneText }, EntityType::Spoiler));
 	} else {
@@ -405,6 +410,13 @@ void BuildSectionButtons(SectionBuilder &builder) {
 		.targetSection = CustomizationId(),
 		.icon = { &st::menuIconCustomize },
 		.keywords = { u"customization"_q, u"appearance"_q, u"tgplus"_q },
+	});
+
+	builder.addSectionButton({
+		.title = tr::lng_tgplus_settings_title(),
+		.targetSection = TgplusId(),
+		.icon = { &st::menuIconStealth },
+		.keywords = { u"tgplus"_q, u"ghost"_q, u"deleted"_q, u"plus"_q },
 	});
 
 	{ // Folders

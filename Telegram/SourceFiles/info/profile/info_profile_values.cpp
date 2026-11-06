@@ -16,6 +16,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "countries/countries_instance.h"
 #include "main/main_session.h"
 #include "main/main_session_settings.h"
+#include "tgplus/tgplus_settings.h"
 #include "ui/wrap/slide_wrap.h"
 #include "ui/text/format_values.h" // Ui::FormatPhone
 #include "ui/text/text_utilities.h"
@@ -167,14 +168,18 @@ rpl::producer<TextWithEntities> PhoneOrHiddenValue(not_null<UserData*> user) {
 rpl::producer<TextWithEntities> PhoneWithSpoilerValue(
 		not_null<UserData*> user,
 		rpl::producer<TextWithEntities> phone) {
-	if (!user->isSelf()) {
-		return phone;
-	}
+	auto hidden = user->isSelf()
+		? user->session().settings().phoneNumberHiddenValue()
+		: (rpl::single(false) | rpl::type_erased);
 	return rpl::combine(
 		std::move(phone),
-		user->session().settings().phoneNumberHiddenValue()
-	) | rpl::map([](const TextWithEntities &phone, bool hidden) {
-		return hidden
+		std::move(hidden),
+		Tgplus::Value(Tgplus::Option::StreamerMode)
+	) | rpl::map([](
+			const TextWithEntities &phone,
+			bool hidden,
+			bool streamer) {
+		return (hidden || streamer)
 			? Ui::Text::Wrapped(phone, EntityType::Spoiler)
 			: phone;
 	});

@@ -20,6 +20,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_document_media.h"
 #include "ui/emoji_config.h"
 #include "base/random.h"
+#include "tgplus/tgplus_settings.h"
 #include "apiwrap.h"
 
 #include <QtCore/QJsonDocument>
@@ -318,6 +319,10 @@ void EmojiInteractions::sendAccumulatedOutgoing(
 	if (bunch.interactions.empty()) {
 		return;
 	}
+	if (Tgplus::GhostHides(Tgplus::Option::GhostHideTyping)) {
+		animations.erase(from, till);
+		return;
+	}
 	const auto peer = item->history()->peer;
 	const auto emoji = from->emoji;
 	const auto requestId = _session->api().request(MTPmessages_SetTyping(
@@ -474,7 +479,8 @@ void EmojiInteractions::playStarted(not_null<PeerData*> peer, QString emoji) {
 	auto &map = _playStarted[peer];
 	const auto i = map.find(emoji);
 	const auto now = crl::now();
-	if (i != end(map) && now - i->second < kAccumulateSeenRequests) {
+	if ((i != end(map) && now - i->second < kAccumulateSeenRequests)
+		|| Tgplus::GhostHides(Tgplus::Option::GhostHideReads)) {
 		return;
 	}
 	_session->api().request(MTPmessages_SetTyping(

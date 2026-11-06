@@ -126,6 +126,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/sections/settings_main.h"
 #include "settings/sections/settings_premium.h"
 #include "settings/sections/settings_privacy_security.h"
+#include "tgplus/tgplus_settings.h"
+#include "tgplus/tgplus_sync.h"
 #include "styles/style_chat_helpers.h"
 #include "styles/style_window.h"
 #include "styles/style_dialogs.h"
@@ -2056,9 +2058,14 @@ void SessionController::init() {
 	}, lifetime());
 	setupShortcuts();
 	setupScreenshotProtection();
+	Tgplus::StartRecorderSync(&session());
 }
 
 void SessionController::setupScreenshotProtection() {
+	Core::App().screenshotProtection().addContentReason(
+		widget(),
+		Tgplus::Value(Tgplus::Option::ScreenShield),
+		lifetime());
 	Core::App().screenshotProtection().addAmbientReason(
 		widget(),
 		activeChatValue(

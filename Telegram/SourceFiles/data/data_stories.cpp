@@ -24,6 +24,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "main/main_app_config.h"
 #include "main/main_session.h"
+#include "tgplus/tgplus_settings.h"
 #include "ui/layers/show.h"
 #include "ui/text/text_utilities.h"
 
@@ -1390,6 +1391,9 @@ void Stories::toggleHidden(
 void Stories::sendMarkAsReadRequest(
 		not_null<PeerData*> peer,
 		StoryId tillId) {
+	if (Tgplus::GhostHides(Tgplus::Option::GhostHideStories)) {
+		return;
+	}
 	const auto peerId = peer->id;
 	_markReadRequests.emplace(peerId);
 	const auto finish = [=] {
@@ -1435,6 +1439,9 @@ void Stories::sendMarkAsReadRequests() {
 
 void Stories::sendIncrementViewsRequests() {
 	if (_incrementViewsPending.empty()) {
+		return;
+	} else if (Tgplus::GhostHides(Tgplus::Option::GhostHideStories)) {
+		_incrementViewsPending.clear();
 		return;
 	}
 	struct Prepared {

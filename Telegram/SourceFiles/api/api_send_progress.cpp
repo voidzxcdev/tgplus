@@ -13,6 +13,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_user.h"
 #include "base/unixtime.h"
 #include "data/data_peer_values.h"
+#include "tgplus/tgplus_settings.h"
 #include "apiwrap.h"
 
 namespace Api {
@@ -109,10 +110,12 @@ bool SendProgressManager::updated(const Key &key, bool doing) {
 }
 
 void SendProgressManager::send(const Key &key, int progress) {
-	if (skipRequest(key)) {
+	using Type = SendProgressType;
+	if (skipRequest(key)
+		|| (key.type != Type::Speaking
+			&& Tgplus::GhostHides(Tgplus::Option::GhostHideTyping))) {
 		return;
 	}
-	using Type = SendProgressType;
 	const auto action = [&]() -> MTPsendMessageAction {
 		const auto p = MTP_int(progress);
 		switch (key.type) {

@@ -100,6 +100,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/platform/base_platform_info.h"
 #include "base/call_delayed.h"
 #include "settings/sections/settings_premium.h"
+#include "tgplus/tgplus_ui.h"
 #include "window/window_peer_menu.h"
 #include "window/window_controller.h"
 #include "window/window_session_controller.h"
@@ -1411,6 +1412,7 @@ void AddMessageActions(
 			menu,
 			list->controller()->uiShow(),
 			request.item);
+		Tgplus::FillMessageMenu(menu, list->controller(), request.item);
 	}
 	AddSelectionAction(menu, request, list);
 	if (request.item && request.selectedItems.empty()) {

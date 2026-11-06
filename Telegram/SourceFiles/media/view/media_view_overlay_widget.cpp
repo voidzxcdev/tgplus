@@ -27,6 +27,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/crash_reports.h"
 #include "core/sandbox.h"
 #include "core/shortcuts.h"
+#include "tgplus/tgplus_settings.h"
 #include "ui/widgets/menu/menu_add_action_callback.h"
 #include "ui/widgets/menu/menu_add_action_callback_factory.h"
 #include "ui/widgets/dropdown_menu.h"
@@ -6144,7 +6145,9 @@ void OverlayWidget::setSystemMediaControls(
 }
 
 bool OverlayWidget::contentNeedsScreenshotProtection() const {
-	if (const auto story = _stories ? _stories->story() : nullptr) {
+	if (Tgplus::Enabled(Tgplus::Option::ScreenShield)) {
+		return true;
+	} else if (const auto story = _stories ? _stories->story() : nullptr) {
 		return story->forbidsForward();
 	}
 	return (_history && !_history->peer->allowsForwarding())

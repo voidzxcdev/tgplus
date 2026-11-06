@@ -22,6 +22,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/notifications_manager.h"
 #include "core/application.h"
 #include "lang/lang_keys.h"
+#include "tgplus/tgplus_settings.h"
 #include "apiwrap.h"
 
 namespace Data {
@@ -953,6 +954,9 @@ void RepliesList::sendReadTillRequest() {
 	}
 	const auto api = &_history->session().api();
 	api->request(base::take(_readRequestId)).cancel();
+	if (Tgplus::GhostHides(Tgplus::Option::GhostHideReads)) {
+		return;
+	}
 
 	_readRequestId = api->request(MTPmessages_ReadDiscussion(
 		_history->peer->input(),

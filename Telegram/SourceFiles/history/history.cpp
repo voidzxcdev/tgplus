@@ -71,6 +71,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "storage/storage_shared_media.h"
 #include "storage/storage_account.h"
 #include "support/support_helper.h"
+#include "tgplus/tgplus_archive.h"
 #include "ui/image/image.h"
 #include "ui/text/text_options.h"
 #include "ui/text/text_utilities.h"
@@ -96,6 +97,16 @@ using UpdateFlag = Data::HistoryUpdate::Flag;
 		HistoryItemCommonFields fields) {
 	fields.flags |= MessageFlag::Local;
 	return fields;
+}
+
+[[nodiscard]] std::pair<MsgId, MsgId> SliceBounds(
+		const std::vector<not_null<HistoryItem*>> &items) {
+	auto result = std::pair(items.front()->id, items.front()->id);
+	for (const auto &item : items) {
+		result.first = std::min(result.first, item->id);
+		result.second = std::max(result.second, item->id);
+	}
+	return result;
 }
 
 [[nodiscard]] Dialogs::UnreadState AdjustedForumUnreadState(
@@ -1898,9 +1909,57 @@ void History::addEdgesToSharedMedia() {
 	}
 }
 
+void History::mergeArchived(
+		std::vector<not_null<HistoryItem*>> &items,
+		MsgId after,
+		MsgId before) {
+	const auto restored = Tgplus::RestoreDeleted(this, after, before);
+	if (restored.empty()) {
+		return;
+	}
+	items.insert(end(items), begin(restored), end(restored));
+	ranges::sort(items, [](
+			not_null<HistoryItem*> a,
+			not_null<HistoryItem*> b) {
+		return a->id < b->id;
+	});
+}
+
+bool History::sliceReachesLast(MsgId sliceMax) const {
+	const auto last = lastMessage();
+	return last && last->isRegular() && (last->id <= sliceMax);
+}
+
+void History::addArchivedAtTop() {
+	const auto oldMin = minMsgId();
+	const auto restored = Tgplus::RestoreDeleted(
+		this,
+		MsgId(0),
+		oldMin ? oldMin : ServerMaxMsgId);
+	if (!restored.empty()) {
+		addCreatedOlderSlice(restored);
+	}
+}
+
+void History::addArchivedAtBottom() {
+	Expects(!isBuildingFrontBlock());
+
+	const auto restored = Tgplus::RestoreDeleted(
+		this,
+		maxMsgId(),
+		ServerMaxMsgId);
+	for (const auto &item : restored) {
+		addItemToBlock(item);
+	}
+	if (!restored.empty()) {
+		addToSharedMedia(restored);
+	}
+}
+
 void History::addOlderSlice(const QVector<MTPMessage> &slice) {
 	if (slice.isEmpty()) {
 		_loadedAtTop = true;
+		addArchivedAtTop();
 		checkLocalMessages();
 		return;
 	}
@@ -1915,11 +1974,22 @@ void History::addOlderSlice(const QVector<MTPMessage> &slice) {
 		}
 	}
 
-	if (const auto added = createItems(slice); !added.empty()) {
+	if (auto added = createItems(slice); !added.empty()) {
+		const auto [sliceMin, sliceMax] = SliceBounds(added);
+		const auto oldMin = minMsgId();
+		mergeArchived(
+			added,
+			sliceMin,
+			(oldMin
+				? oldMin
+				: sliceReachesLast(sliceMax)
+				? ServerMaxMsgId
+				: sliceMax));
 		addCreatedOlderSlice(added);
 	} else {
 		// If no items were added it means we've loaded everything old.
 		_loadedAtTop = true;
+		addArchivedAtTop();
 		addEdgesToSharedMedia();
 	}
 	checkLocalMessages();
@@ -1957,9 +2027,15 @@ void History::addNewerSlice(const QVector<MTPMessage> &slice) {
 		}
 	}
 
-	if (const auto added = createItems(slice); !added.empty()) {
+	const auto oldMax = maxMsgId();
+	if (auto added = createItems(slice); !added.empty()) {
 		Assert(!isBuildingFrontBlock());
 
+		const auto [sliceMin, sliceMax] = SliceBounds(added);
+		mergeArchived(
+			added,
+			oldMax ? oldMax : sliceMin,
+			sliceReachesLast(sliceMax) ? ServerMaxMsgId : sliceMax);
 		for (const auto &item : added) {
 			addItemToBlock(item);
 		}
@@ -1968,6 +2044,7 @@ void History::addNewerSlice(const QVector<MTPMessage> &slice) {
 	} else {
 		_loadedAtBottom = true;
 		setLastMessage(lastAvailableMessage());
+		addArchivedAtBottom();
 		addEdgesToSharedMedia();
 	}
 

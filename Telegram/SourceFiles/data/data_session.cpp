@@ -94,6 +94,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/call_delayed.h"
 #include "base/random.h"
 #include "spellcheck/spellcheck_highlight_syntax.h"
+#include "tgplus/tgplus_archive.h"
 
 namespace Data {
 namespace {
@@ -3069,7 +3070,9 @@ void Session::updateEditedMessage(const MTPMessage &data) {
 	}, [&](const MTPDmessageService &data) {
 		existing->applyEdition(data);
 	}, [&](const auto &data) {
-		existing->applyEdition(HistoryMessageEdition(_session, data));
+		auto edition = HistoryMessageEdition(_session, data);
+		Tgplus::RememberEdit(existing, edition.textWithEntities);
+		existing->applyEdition(std::move(edition));
 	});
 }
 
@@ -3348,6 +3351,7 @@ void Session::processMessagesDeleted(
 		const auto i = list ? list->find(messageId.v) : Messages::iterator();
 		if (list && i != list->end()) {
 			if (keep && i->second->canKeepAfterServerDelete()) {
+				Tgplus::RememberDeleted(i->second);
 				i->second->markDeletedOnServer();
 				continue;
 			}
@@ -3378,6 +3382,7 @@ void Session::processNonChannelMessagesDeleted(const QVector<MTPint> &data) {
 	for (const auto &messageId : data) {
 		if (const auto item = nonChannelMessage(messageId.v)) {
 			if (keep && item->canKeepAfterServerDelete()) {
+				Tgplus::RememberDeleted(item);
 				item->markDeletedOnServer();
 				continue;
 			}

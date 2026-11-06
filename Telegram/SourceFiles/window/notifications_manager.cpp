@@ -45,6 +45,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_domain.h"
 #include "main/main_session.h"
 #include "main/main_session_settings.h"
+#include "tgplus/tgplus_settings.h"
 #include "ui/text/text_utilities.h"
 #include "platform/platform_specific.h"
 
@@ -376,6 +377,10 @@ System::SkipState System::computeSkipState(
 		&& Dialogs::IsVipPeer(thread->peer())) {
 		// TGPlus: the "most important person" always gets through,
 		// even if the chat is muted in the app.
+		return withSilent(SkipState::DontSkip);
+	} else if (messageType
+		&& !item->out()
+		&& Tgplus::MatchesAlertKeywords(item)) {
 		return withSilent(SkipState::DontSkip);
 	}
 	if (messageType && notifySettings->muteUnknown(thread)) {
@@ -1097,7 +1102,8 @@ Manager::DisplayOptions Manager::getNotificationOptions(
 		HistoryItem *item,
 		Data::ItemNotificationType type) const {
 	const auto hideEverything = Core::App().passcodeLocked()
-		|| forceHideDetails();
+		|| forceHideDetails()
+		|| Tgplus::Enabled(Tgplus::Option::StreamerMode);
 	const auto view = Core::App().settings().notifyView();
 	const auto peer = item ? item->history()->peer.get() : nullptr;
 	const auto topic = item ? item->topic() : nullptr;

@@ -16,6 +16,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/compose/compose_show.h"
 #include "chat_helpers/message_field.h"
 #include "chat_helpers/share_message_phrase_factory.h"
+#include "tgplus/tgplus_archive.h"
+#include "tgplus/tgplus_ui.h"
 #include "ui/basic_click_handlers.h"
 #include "ui/controls/userpic_button.h"
 #include "ui/wrap/slide_wrap.h"
@@ -331,6 +333,7 @@ private:
 	void addDirectMessages();
 	void addToggleTopicClosed();
 	void addExportChat();
+	void addTgplusDeletedLog();
 	void addTranslate();
 	void addReport();
 	void addNewContact();
@@ -1059,6 +1062,17 @@ void Filler::addDirectMessages() {
 			monoforum,
 			Window::SectionShow::Way::Forward);
 	}, &st::menuIconChatDiscuss);
+}
+
+void Filler::addTgplusDeletedLog() {
+	if (!_peer || _topic || !Tgplus::HasDeleted(_peer)) {
+		return;
+	}
+	const auto peer = not_null(_peer);
+	const auto controller = _controller;
+	_addAction(tr::lng_tgplus_log_title(tr::now), [=] {
+		controller->show(Box(Tgplus::DeletedLogBox, controller, peer));
+	}, &st::menuIconDelete);
 }
 
 void Filler::addExportChat() {
@@ -1964,6 +1978,7 @@ void Filler::fillHistoryActions() {
 	addViewDiscussion();
 	addDirectMessages();
 	addExportChat();
+	addTgplusDeletedLog();
 	addTranslate();
 	addReport();
 	addClearHistory();

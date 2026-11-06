@@ -1936,6 +1936,8 @@ PRIVATE
     settings/sections/settings_chat.h
     settings/sections/settings_customization.cpp
     settings/sections/settings_customization.h
+    settings/sections/settings_tgplus.cpp
+    settings/sections/settings_tgplus.h
     settings/sections/settings_blocked_peers.cpp
     settings/sections/settings_blocked_peers.h
     settings/sections/settings_business.cpp
@@ -2175,6 +2177,14 @@ PRIVATE
     test/test_widgets.h
     test/test_window_exposure.cpp
     test/test_window_exposure.h
+    tgplus/tgplus_archive.cpp
+    tgplus/tgplus_archive.h
+    tgplus/tgplus_settings.cpp
+    tgplus/tgplus_settings.h
+    tgplus/tgplus_sync.cpp
+    tgplus/tgplus_sync.h
+    tgplus/tgplus_ui.cpp
+    tgplus/tgplus_ui.h
     ui/boxes/edit_invite_link_session.cpp
     ui/boxes/edit_invite_link_session.h
     ui/boxes/emoji_stake_box.cpp

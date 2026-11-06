@@ -33,6 +33,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_element.h"
 #include "iv/iv_rich_page.h"
 #include "core/application.h"
+#include "tgplus/tgplus_archive.h"
+#include "tgplus/tgplus_settings.h"
 #include "apiwrap.h"
 
 namespace Data {
@@ -750,6 +752,13 @@ void Histories::sendReadRequest(not_null<History*> history, State &state) {
 	const auto tillId = state.sentReadTill = base::take(state.willReadTill);
 	state.willReadWhen = 0;
 	state.sentReadDone = false;
+	if (Tgplus::GhostHides(Tgplus::Option::GhostHideReads)) {
+		// WHY: the read stays local; the caller iterates _states, so the
+		// emptied state is left for a later checkEmptyState() to drop.
+		state.sentReadTill = 0;
+		history->validateMonoAndForumUnread(tillId);
+		return;
+	}
 	DEBUG_LOG(("Reading: sending request now with till %1."
 		).arg(tillId.bare));
 	sendRequest(history, RequestType::ReadInbox, [=](Fn<void()> finish) {
@@ -824,6 +833,7 @@ void Histories::deleteMessages(
 		not_null<History*> history,
 		const QVector<MTPint> &ids,
 		bool revoke) {
+	Tgplus::DismissDeleted(history, ids);
 	sendRequest(history, RequestType::Delete, [=](Fn<void()> finish) {
 		const auto done = [=](const MTPmessages_AffectedMessages &result) {
 			session().api().applyAffectedMessages(history->peer, result);
