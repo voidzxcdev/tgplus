@@ -56,6 +56,23 @@ void PrepareSupportMode(not_null<Main::Session*> session) {
 	session->saveSettings();
 }
 
+// The TGPlus cover is black and white in every theme, like the icon.
+[[nodiscard]] QColor CoverTopColor() {
+	return QColor(0, 0, 0);
+}
+
+[[nodiscard]] QColor CoverBottomColor() {
+	return QColor(36, 36, 36);
+}
+
+[[nodiscard]] QColor CoverCloudsColor() {
+	return QColor(255, 255, 255, 30);
+}
+
+[[nodiscard]] QColor CoverPlaneColor() {
+	return QColor(255, 255, 255);
+}
+
 } // namespace
 
 Step::CoverAnimation::~CoverAnimation() = default;
@@ -422,7 +439,7 @@ void Step::prepareCoverMask() {
 	Assert(maskIntsPerLineAdded >= 0);
 	auto realHeight = static_cast<float64>(maskHeight - 1);
 	for (auto y = 0; y != maskHeight; ++y) {
-		auto color = anim::color(st::introCoverTopBg, st::introCoverBottomBg, y / realHeight);
+		auto color = anim::color(CoverTopColor(), CoverBottomColor(), y / realHeight);
 		auto colorInt = anim::getPremultiplied(color);
 		for (auto x = 0; x != maskWidth; ++x) {
 			*maskInts++ = colorInt;
@@ -463,8 +480,8 @@ void Step::paintCover(QPainter &p, int top) {
 		auto rightShown = int(base::SafeRound(shown * rightFull));
 		right = rightShown - st::introCoverRight.width();
 	}
-	st::introCoverLeft.paint(p, left, coverHeight - st::introCoverLeft.height(), width());
-	st::introCoverRight.paint(p, width() - right - st::introCoverRight.width(), coverHeight - st::introCoverRight.height(), width());
+	st::introCoverLeft.paint(p, left, coverHeight - st::introCoverLeft.height(), width(), CoverCloudsColor());
+	st::introCoverRight.paint(p, width() - right - st::introCoverRight.width(), coverHeight - st::introCoverRight.height(), width(), CoverCloudsColor());
 
 	auto planeLeft = (width() - st::introCoverIcon.width()) / 2 - st::introCoverIconLeft;
 	auto planeTop = top + st::introCoverIconTop;
@@ -475,7 +492,7 @@ void Step::paintCover(QPainter &p, int top) {
 		planeLeft += deltaLeft;
 	//	planeTop += top;
 	}
-	st::introCoverIcon.paint(p, planeLeft, planeTop, width());
+	st::introCoverIcon.paint(p, planeLeft, planeTop, width(), CoverPlaneColor());
 }
 
 int Step::contentLeft() const {
