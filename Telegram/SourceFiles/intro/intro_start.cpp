@@ -26,7 +26,7 @@ StartWidget::StartWidget(
 : Step(parent, account, data, true) {
 	setMouseTracking(true);
 	setTitleText(rpl::single(AppName.utf16()));
-	setDescriptionText(tr::lng_intro_about());
+	setDescriptionText(tr::lng_tgplus_intro_about());
 	show();
 }
 

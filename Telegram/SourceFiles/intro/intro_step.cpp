@@ -69,8 +69,14 @@ void PrepareSupportMode(not_null<Main::Session*> session) {
 	return QColor(255, 255, 255, 30);
 }
 
-[[nodiscard]] QColor CoverPlaneColor() {
-	return QColor(255, 255, 255);
+void PaintCoverPlane(QPainter &p, int left, int top, int outerw) {
+	const auto paint = [&](const style::icon &icon, QColor color) {
+		icon.paint(p, left, top, outerw, color);
+	};
+	paint(st::introCoverPlaneTraceIcon, QColor(255, 255, 255, 90));
+	paint(st::introCoverPlaneInnerIcon, QColor(200, 200, 200));
+	paint(st::introCoverPlaneOuterIcon, QColor(140, 140, 140));
+	paint(st::introCoverPlaneTopIcon, QColor(255, 255, 255));
 }
 
 } // namespace
@@ -492,7 +498,7 @@ void Step::paintCover(QPainter &p, int top) {
 		planeLeft += deltaLeft;
 	//	planeTop += top;
 	}
-	st::introCoverIcon.paint(p, planeLeft, planeTop, width(), CoverPlaneColor());
+	PaintCoverPlane(p, planeLeft, planeTop, width());
 }
 
 int Step::contentLeft() const {

@@ -391,7 +391,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "lng_edit_caption_attach" = "Sorry, you can't attach new media while editing a message.";
 "lng_edit_caption_voice" = "Sorry, you can't edit messages when you have an unsent voice message.";
 
-"lng_intro_about" = "Welcome to TGPlus.\nTelegram, with the extras built in.";
+"lng_intro_about" = "Welcome to the official Telegram Desktop app.\nIt's fast and secure.";
 "lng_start_msgs" = "Start Messaging";
 
 "lng_intro_next" = "Next";
@@ -773,6 +773,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "lng_tgplus_forget_deleted" = "Remove from archive";
 "lng_tgplus_remind_me" = "Remind me";
 "lng_tgplus_remind_done" = "Reminder set in Saved Messages.";
+"lng_tgplus_intro_about" = "Welcome to TGPlus.\nTelegram, with the extras built in.";
 "lng_tgplus_about" = "TGPlus is an unofficial Telegram client built on Telegram Desktop. It keeps deleted messages and edit history, and adds ghost mode, streamer mode and keyword alerts.";
 "lng_tgplus_about_source" = "Source code: {link}";
 "lng_settings_replace_emojis" = "Replace emoji automatically";

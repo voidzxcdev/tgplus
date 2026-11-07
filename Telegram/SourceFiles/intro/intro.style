@@ -21,6 +21,10 @@ introCoverIcon: icon {
 	{ "intro_plane_outer", introCoverPlaneOuter },
 	{ "intro_plane_top", introCoverPlaneTop },
 };
+introCoverPlaneTraceIcon: icon {{ "intro_plane_trace", introCoverPlaneTrace }};
+introCoverPlaneInnerIcon: icon {{ "intro_plane_inner", introCoverPlaneInner }};
+introCoverPlaneOuterIcon: icon {{ "intro_plane_outer", introCoverPlaneOuter }};
+introCoverPlaneTopIcon: icon {{ "intro_plane_top", introCoverPlaneTop }};
 introCoverIconLeft: 50px;
 introCoverIconTop: 46px;
 
@@ -77,6 +81,13 @@ introSlideDuration: 200;
 introCoverDuration: 200;
 
 introNextButton: RoundButton(defaultActiveButton) {
+	textFg: windowBg;
+	textFgOver: windowBg;
+	textBg: windowFg;
+	textBgOver: windowSubTextFg;
+	ripple: RippleAnimation(defaultRippleAnimation) {
+		color: windowSubTextFg;
+	}
 	width: 300px;
 	height: 42px;
 	radius: 6px;
@@ -85,8 +96,8 @@ introNextButton: RoundButton(defaultActiveButton) {
 		font: font(boxFontSize semibold);
 	}
 }
-introFragmentIcon: icon{{ "fragment", activeButtonFg }};
-introFragmentIconOver: icon{{ "fragment", activeButtonFgOver }};
+introFragmentIcon: icon{{ "fragment", windowBg }};
+introFragmentIconOver: icon{{ "fragment", windowBg }};
 introFragmentButton: RoundButton(introNextButton) {
 	icon: introFragmentIcon;
 	iconOver: introFragmentIconOver;
